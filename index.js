@@ -4,6 +4,9 @@ var sysPath = require('path');
 var slashes = require('connect-slashes');
 var serveStatic = require('serve-static');
 
+var httpProxy = require('http-proxy');
+var proxyServer = httpProxy.createProxyServer({changeOrigin: true })
+
 var startServer = function(options, callback) {
   // Specify default options.
   if (typeof options === 'function') {
@@ -21,6 +24,7 @@ var startServer = function(options, callback) {
   if (options.noPushState == null) options.noPushState = false;
   if (options.noLog == null) options.noLog = false;
   if (callback == null) callback = Function.prototype;
+  if (options.proxy == null) options.proxy = [];
 
   var rootPath = sysPath.resolve(options.path);
   var sendFileOptions = {root: rootPath};
@@ -43,6 +47,13 @@ var startServer = function(options, callback) {
   if (options.stripSlashes) {
     app.use(slashes(false));
   }
+
+  options.proxy.forEach(function (proxy) {
+    console.log('Proxying path ' + proxy.path + ' to url ' + proxy.url);    
+    app.use(proxy.path, function(req, res) {       
+      proxyServer.web(req, res, { target: proxy.url, timeout: 5000 });
+    });
+  });
 
   // Route base requests to `options.indexPath`
   app.all('/', function(request, response) {
