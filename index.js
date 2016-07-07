@@ -49,9 +49,22 @@ var startServer = function(options, callback) {
     app.use(slashes(false));
   }
 
+  if (options.proxy.length != 0) {
+    // proxyServer.on('econnreset', function (err, errReq, errRes) {
+    proxyServer.on('error', function (err, req, res) {
+      // proxyServer.close()
+      console.error('Proxying error connecting for path ' + req.url + ' ' + err)
+      res.writeHead(504, {
+        'Content-Type': 'text/plain'
+      });
+      res.end('The server is acting as proxy and did not receive a timely response from the upstream server.');
+    });
+  }
+
   options.proxy.forEach(function (proxy) {
-    console.log('Proxying path ' + proxy.path + ' to url ' + proxy.url);    
-    app.use(proxy.path, function(req, res) {       
+    console.log('Proxying path' + proxy.path + ' to url ' + proxy.url);    
+    app.use(proxy.path, function(req, res) {  
+     
       proxyServer.web(req, res, { target: proxy.url, timeout: 5000 });
     });
   });
