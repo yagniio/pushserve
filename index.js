@@ -36,6 +36,7 @@ var startServer = function(options, callback) {
     app.use(function(request, response, next) {
       response.header('Cache-Control', 'no-cache');
       response.header('Access-Control-Allow-Origin', '*');
+      response.header('Access-Control-Allow-Headers', 'Content-Type');
       next();
     });
   }
